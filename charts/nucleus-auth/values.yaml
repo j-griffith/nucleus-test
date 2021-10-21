@@ -1,0 +1,49 @@
+accept_eula: no
+
+ingress:
+  hostname: "<hostname>"
+  tls: false
+
+storage:
+  class: "<storage_class>"
+  size: "<size>"  # e.g. 100Gi
+  local:
+    enabled: false  # if you don't have storage class, set to "true"
+    node: "<node_name>"  # on which kube node this storage is located
+    path: "</path/to/folder>"  # path to folder on kube node
+
+secrets:
+  master_password: ""  # master password for Nucleus Auth
+  admin_password: ""  # admin password for Nucleus Auth
+  tags_service_password: ""
+  thumbnails_service_password: ""
+  deeptag_service_password: ""
+  search_service_password: ""
+  snapshot_service_password: ""
+  asset_converter_password: ""
+  pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+  tls_secret: "<tls_secret_name>"  # name of TLS secret
+  nucleus_secret: "nucleus-secrets"  # name of nucleus secret
+
+image:
+  name: "nucleus-auth"
+  registry: "gitlab-master.nvidia.com:5005/omniverse/omni-auth"
+  tag: "1.2.0_mr115.gitlab.3043906.6c271618"
+
+#extra_env_vars:
+#  - name: USE_SAML_SSO
+#    value: 1
+#  - name: SAML_SSO_REDIRECT
+#    value: "https://login.microsoftonline.com/43083d15-7273-40c1-b7db-39efd9ccc17a/saml2"
+#  - name: SAML_SSO_ISSUER
+#    value: "https://sso-gw.ov.nvidia.com"
+#  - name: SAML_SSO_PUBLIC_NAME
+#    value: "NVIDIA SSO"
+#  - name: SAML_SSO_IMAGE
+#    value: "https://www.nvidia.com/favicon.ico"
+#  - name: CREDENTIAL_UI_VISIBLE
+#    value: 0
+#  - name: SERVICE_ACCESS_TOKEN_DURATION
+#    value: 360
+#  - name: SERVICE_REFRESH_TOKEN_DURATION
+#    value: 10080

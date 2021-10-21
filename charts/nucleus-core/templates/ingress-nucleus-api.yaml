@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nucleus-api
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+#    nginx.ingress.kubernetes.io/configuration-snippet: |
+#      proxy_set_header Host $http_host:3019;
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}
+  tls:
+  - hosts:
+      - {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+    secretName: {{ include "local_or_global" (list "secrets.tls_secret" .) | trim }}
+  {{ end }}
+  rules:
+  - host: {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+    http:
+      paths:
+      - path: /omni/api(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: nucleus-api
+            port:
+              number: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}3019{{ else }}3009{{ end }}

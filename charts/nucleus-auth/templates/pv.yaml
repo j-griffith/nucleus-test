@@ -1,0 +1,25 @@
+{{- if .Values.storage.local.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nucleus-auth
+spec:
+  capacity:
+    storage: {{ .Values.storage.size }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: manual
+  hostPath:
+    path: {{ .Values.storage.local.path }}/ov-nucleus-auth-{{ .Release.Name }}
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ .Values.storage.local.node }}
+{{- end }}

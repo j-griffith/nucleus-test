@@ -1,0 +1,60 @@
+{{ if .Values.utl_monpx.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: utl-monpx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: utl-monpx
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: utl-monpx
+  template:
+    metadata:
+      labels:
+        app: utl-monpx
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      initContainers:
+      - name: wait-nucleus-log-processor
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-log-processor 9500; do echo "Waiting for nucleus-log-processor service"; sleep 2; done;']
+      containers:
+      - name: utl-monpx
+          {{ $registry := .Values.images.registry }}
+          {{ $tag := .Values.images.tag }}
+          {{ with .Values.utl_monpx.image }}
+        image: "{{ if .registry }}{{ .registry }}{{ else }}{{ $registry }}{{ end }}/{{ .name }}:{{ if .tag }}{{ .tag }}{{ else }}{{ $tag }}{{ end }}{{ if .digest }}@{{ .digest }} {{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_DS_BLACKLIST_PATH
+            value: /omni/data/PathBlackList.json
+          - name: OMNI_MONPX_SCRAPE_URLS
+            value: http://nucleus-api:9500/metrics;http://nucleus-api:3010/metrics;http://nucleus-log-processor:9500/metrics;http://nucleus-resolver-cache:9500/metrics;http://redis-messagebus-exporter:9121/metrics
+        volumeMounts:
+        - mountPath: /omni/data
+          name: nucleus
+          subPath: data
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+{{ end }}

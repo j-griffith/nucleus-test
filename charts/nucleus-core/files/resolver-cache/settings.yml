@@ -1,0 +1,8 @@
+enable_frontend: False
+frontend_root: "/omni/omnicache_browser"
+log_path: "/omni/log"
+cache_root: "/omni/data"
+metrics_enabled: True
+listen_address: "0.0.0.0"
+metrics_address: "0.0.0.0"
+client_compression: False

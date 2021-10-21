@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-messagebus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: redis-messagebus
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis-messagebus
+  template:
+    metadata:
+      labels:
+        app: redis-messagebus
+    spec:
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      containers:
+      - name: redis-messagebus
+        {{ with .Values.redis_messagebus.image }}
+        image: "{{ if .registry }}{{ .registry }}/{{ end }}{{ .name }}:{{ .tag }}{{ if .digest }}@{{ .digest }} {{ end }}"
+        {{ end }}
+        args:
+          - redis-server
+          - /redis.messagebus.conf
+        volumeMounts:
+          - mountPath: /redis.messagebus.conf
+            name: configs
+            subPath: redis.messagebus.conf
+      - name: redis-messagebus-exporter
+        image: oliver006/redis_exporter:v1.6.0-alpine
+        env:
+          - name: REDIS_ADDR
+            value: 127.0.0.1:6379
+      volumes:
+      - name: configs
+        configMap:
+          name: nucleus-configs
+          items:
+            - key: redis.messagebus.conf
+              path: redis.messagebus.conf

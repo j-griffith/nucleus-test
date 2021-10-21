@@ -1,0 +1,43 @@
+global:
+  accept_eula: no
+  ingress:
+    hostname: "<hostname>"
+    tls: false
+  secrets:
+    pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+    master_password: ""
+    tls_secret: "<tls_secret_name>"
+    nucleus_secret: "nucleus-secrets"
+
+nucleus-core:
+  enabled: true
+  storage:
+    class: "<storage_class_name>"
+    size: "<storage_size>"  # e.g. 100Gi
+
+nucleus-auth:
+  enabled: true
+  storage:
+    class: "<storage_class_name>"
+    size: "<storage_size>"  # e.g. 100Gi
+
+nucleus-discovery:
+  enabled: true
+
+nucleus-web-ui:
+  enabled: true
+
+nucleus-tagging:
+  enabled: true
+  storage:
+    class: "<storage_class_name>"
+    size: "<storage_size>"  # e.g. 100Gi
+
+nucleus-thumbnails:
+  enabled: true
+  storage:
+    class: "<storage_class_name>"
+    size: "<storage_size>"  # e.g. 100Gi
+
+nucleus-search:
+  enabled: true

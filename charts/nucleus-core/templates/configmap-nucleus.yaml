@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nucleus-configs
+  namespace: {{ .Release.Namespace }}
+data:
+  cache-settings.yaml: |-
+{{ .Files.Get "files/resolver-cache/settings.yml" | indent 4 }}
+  redis.messagebus.conf: |-
+{{ .Files.Get "files/redis/messagebus.conf" | indent 4 }}
+  service_deployments: |
+    reg:
+      - name: external
+        transport:
+          type: connlib
+          params:
+            url: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}wss{{ else }}ws{{ end }}://{{ include "local_or_global" (list "ingress.hostname" .) | trim }}:{{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}443{{ else }}80{{ end }}/omni/api
+      - name: internal
+        transport:
+          type: connlib
+          params:
+            url: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}wss{{ else }}ws{{ end }}://{{ include "local_or_global" (list "ingress.hostname" .) | trim }}:{{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}443{{ else }}80{{ end }}/omni/api

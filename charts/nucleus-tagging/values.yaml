@@ -1,0 +1,28 @@
+accept_eula: no
+
+ingress:
+  hostname: "<hostname>"
+  tls: false
+
+storage:
+  class: "<storage_class>"
+  size: "<size>"  # e.g. 100Gi
+  local:
+    enabled: false  # if you don't have storage class, set to "true"
+    node: "<node_name>"  # on which kube node this storage is located
+    path: "</path/to/folder>"  # path to folder on kube node
+
+secrets:
+  password: "<tagging_password>"
+  pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+  tls_secret: "<tls_secret_name>"  # name of TLS secret
+  nucleus_secret: "nucleus-secrets"  # name of nucleus secret
+
+image:
+  name: "nucleus-tagging"
+  registry: "gitlab-master.nvidia.com:5005/omniverse/omni-tag"
+  tag: "2.1.1_mr86.gitlab.3048340.3a71e127"
+
+#extra_env_vars:
+#  - name: OV_LOGGING_LEVEL
+#    value: DEBUG

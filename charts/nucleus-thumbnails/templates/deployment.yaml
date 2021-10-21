@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-thumbnails
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-thumbnails
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-thumbnails
+  template:
+    metadata:
+      labels:
+        app: nucleus-thumbnails
+    spec:
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      containers:
+      - name: nucleus-thumbnails
+          {{ with .Values.image }}
+        image: "{{ .registry }}/{{ .name }}:{{ .tag }}{{ if .digest }}@{{ .digest }}{{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OV_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: ov_password
+                name: nucleus-thumbnails-passwords
+          - name: OV_HOST_NAME
+            value: {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+          - name: OV_INSTANCE_NAME
+            value: {{ .Release.Name }}
+          - name: OV_LOGFILE
+            value: /omni/log/create_thumbnails.log
+          - name: OV_SERVICE_BIND_HOST
+            value: 0.0.0.0
+          - name: SERVICE_DEPLOYMENTS_LOOKUP
+            value: internal
+          - name: SERVICE_DISCOVERY_URL
+            value: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}wss{{ else }}ws{{ end }}://{{ include "local_or_global" (list "ingress.hostname" .) | trim }}/omni/discovery
+          - name: OV_EXCLUDE_PATHS
+            value: '["/@", "/.tags/", "/.system/"]'
+          {{- if .Values.extra_env_vars }}
+          {{- range .Values.extra_env_vars }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          {{ end }}
+        volumeMounts:
+        - mountPath: /omni/log
+          name: nucleus-thumbnails
+          subPath: log
+      volumes:
+      - name: nucleus-thumbnails
+        persistentVolumeClaim:
+          claimName: nucleus-thumbnails

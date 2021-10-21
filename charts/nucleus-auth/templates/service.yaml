@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nucleus-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: 3100
+      targetPort: 3100
+      protocol: TCP
+      name: transport
+    - port: 3180
+      targetPort: 3180
+      protocol: TCP
+      name: login
+  selector:
+    app: nucleus-auth

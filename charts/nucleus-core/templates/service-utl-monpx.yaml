@@ -1,0 +1,17 @@
+{{ if .Values.utl_monpx.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: utl-monpx
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: NodePort
+  ports:
+    - port: 3010
+      targetPort: 8080
+      nodePort: 30001
+      protocol: TCP
+      name: metrics
+  selector:
+    app: utl-monpx
+{{ end }}

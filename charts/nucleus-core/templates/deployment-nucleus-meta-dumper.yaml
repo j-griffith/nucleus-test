@@ -1,0 +1,67 @@
+{{ if .Values.meta_dumper.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-meta-dumper
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-meta-dumper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-meta-dumper
+  template:
+    metadata:
+      labels:
+        app: nucleus-meta-dumper
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      initContainers:
+      - name: wait-nucleus-api
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-api 3006; do echo "Waiting for nucleus-api service"; sleep 2; done;']
+      containers:
+      - name: nucleus-meta-dumper
+          {{ $registry := .Values.images.registry }}
+          {{ $tag := .Values.images.tag }}
+          {{ with .Values.meta_dumper.image }}
+        image: "{{ if .registry }}{{ .registry }}{{ else }}{{ $registry }}{{ end }}/{{ .name }}:{{ if .tag }}{{ .tag }}{{ else }}{{ $tag }}{{ end }}{{ if .digest }}@{{ .digest }} {{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_SERVER
+            value: nucleus-api
+          - name: OMNI_SERVICE_PORT
+            value: "3006"
+          - name: OMNI_META_DUMPER_USER
+            value: "omniverse"
+          - name: OMNI_META_DUMPER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: master_password
+                name: nucleus-master-password
+        volumeMounts:
+        - mountPath: /omni/scratch-meta-dump
+          name: nucleus
+          subPath: scratch-meta-dump
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+{{ end }}

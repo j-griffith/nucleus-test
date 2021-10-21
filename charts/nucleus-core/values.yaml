@@ -1,0 +1,63 @@
+accept_eula: no
+
+ingress:
+  hostname: "<hostname>"
+  tls: false
+
+storage:
+  class: "<storage_class>"
+  size: "<size>"  # e.g. 100Gi
+  access_mode: "ReadWriteMany"  # if using ReadWriteOnce storage, then you should point a node where all the pods
+                                # should be scheduled in "affinity.node" field
+#  affinity:
+#    node: "<node_name>"
+  local:
+    enabled: false  # if you don't have storage class, set to "true"
+    node: "<node_name>"  # on which kube node this storage is located
+    path: "</path/to/folder>"  # path to folder on kube node
+
+secrets:
+  pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+  master_password: ""
+  tls_secret: "<tls_secret_name>"  # if ingress.tls is set to true
+  nucleus_secret: "nucleus-secrets"
+
+images:
+  registry: "gitlab-master.nvidia.com:5005/omniverse/backend"  # from where to pull nucleus images
+  tag: "112.0_mr2038.gitlab.3043636.0b718dd8"  # nucleus-core images tag
+
+api:
+  image:
+    name: "nucleus-api"
+
+lft:
+  replicas: 5
+  image:
+    name: "nucleus-lft"
+
+resolver_cache:
+  image:
+    registry: "nvcr.io/omniverse/internal"
+    name: "nucleus-cache"
+    tag: "2.4.5"
+
+redis_messagebus:
+  image:
+    registry: "registry.hub.docker.com/library"
+    name: "redis"
+    tag: "5.0"
+
+log_processor:
+  enabled: true
+  image:
+    name: "nucleus-log-processor"
+
+meta_dumper:
+  enabled: true
+  image:
+    name: "nucleus-meta-dumper"
+
+utl_monpx:
+  enabled: true
+  image:
+    name: "utl-monpx"

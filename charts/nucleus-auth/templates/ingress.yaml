@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nucleus-auth
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}
+  tls:
+  - hosts:
+      - {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+    secretName: {{ include "local_or_global" (list "secrets.tls_secret" .) | trim }}
+  {{ end }}
+  rules:
+  - host: {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+    http:
+      paths:
+      - path: /omni/auth(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: nucleus-auth
+            port:
+              number: 3100
+      - path: /omni/auth/login(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: nucleus-auth
+            port:
+              number: 3180

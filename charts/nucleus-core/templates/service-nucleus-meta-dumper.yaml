@@ -1,0 +1,17 @@
+{{ if .Values.meta_dumper.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: nucleus-meta-dumper
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30000
+      protocol: TCP
+      name: metrics
+  selector:
+    app: nucleus-meta-dumper
+{{ end }}

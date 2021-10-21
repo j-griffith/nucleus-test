@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 2.1.1
+description: The Nucleus Tagging Helm chart for Kubernetes
+name: nucleus-tagging
+type: application
+version: 2.1.1-mr86.gitlab.3048340.3a71e127

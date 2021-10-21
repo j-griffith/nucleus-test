@@ -1,0 +1,22 @@
+accept_eula: no
+
+ingress:
+  hostname: "test.ov-msk-kube.nvidia.com"
+  tls: false
+
+secrets:
+  pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+  tls_secret: "<tls_secret_name>"  # name of TLS secret
+
+image:
+  name: "nucleus-web-ui"
+  registry: "gitlab-master.nvidia.com:5005/omniverse/omni-web"
+  tag: "2.3.1_mr97.gitlab.3043224.e18b3c31"
+
+#extra_env_vars:
+#  - name: SUPPORTS_SEARCH
+#    value: True
+#  - name: SUPPORTS_ASSET_CONVERTER
+#    value: True
+#  - name: SUPPORTS_TAGS
+#    value: True

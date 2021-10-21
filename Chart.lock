@@ -1,0 +1,24 @@
+dependencies:
+- name: nucleus-core
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 112.0.0-mr2038.gitlab.3043636.0b718dd8
+- name: nucleus-auth
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 1.2.0-mr115.gitlab.3043906.6c271618
+- name: nucleus-discovery
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 1.4.0-mr71.gitlab.3043653.80026cad
+- name: nucleus-web-ui
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 2.3.1-mr97.gitlab.3043224.e18b3c31
+- name: nucleus-tagging
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 2.1.1-mr86.gitlab.3048340.3a71e127
+- name: nucleus-thumbnails
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 1.4.3-mr85.gitlab.3048475.5bd5a0d7
+- name: nucleus-search
+  repository: https://helm.ngc.nvidia.com/omniverse/cesspool
+  version: 2.2.0-mr59.gitlab.3049479.1dcdf6c4
+digest: sha256:b8a42e4cc8d1733be3c0904bda22746e4cf5b721ce953425e4f6bbc2ee95dbf0
+generated: "2021-10-20T16:05:03.330060638-06:00"

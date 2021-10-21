@@ -1,0 +1,64 @@
+[
+  {
+    "username": "admin",
+    "password": "{{ .Values.secrets.admin_password }}",
+    "profile": {
+      "admin": true
+    }
+  },
+  {
+    "username": "omniverse",
+    "password": "{{ .Values.secrets.master_password }}",
+    "profile": {
+      "admin": true
+    }
+  },
+  {
+    "username": "tags_service",
+    "password": "{{ .Values.secrets.tags_service_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  },
+  {
+    "username": "thumbnails_service",
+    "password": "{{ .Values.secrets.thumbnails_service_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  },
+  {
+    "username": "deeptag_service",
+    "password": "{{ .Values.secrets.deeptag_service_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  },
+  {
+    "username": "search_service",
+    "password": "{{ .Values.secrets.search_service_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  },
+  {
+    "username": "snapshot_service",
+    "password": "{{ .Values.secrets.snapshot_service_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  },
+  {
+    "username": "asset_converter",
+    "password": "{{ .Values.secrets.asset_converter_password }}",
+    "profile": {
+      "admin": true,
+      "readonly": true
+    }
+  }
+]

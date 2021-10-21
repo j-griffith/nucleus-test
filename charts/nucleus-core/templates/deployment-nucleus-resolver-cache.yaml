@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-resolver-cache
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-resolver-cache
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-resolver-cache
+  template:
+    metadata:
+      labels:
+        app: nucleus-resolver-cache
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      containers:
+      - name: nucleus-resolver-cache
+        {{ with .Values.resolver_cache.image }}
+        image: "{{ if .registry }}{{ .registry }}/{{ end }}{{ .name }}:{{ .tag }}{{ if .digest }}@{{ .digest }} {{ end }}"
+        {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_CACHE_TYPE
+            value: resolver-cache
+        volumeMounts:
+        - mountPath: /omni/data
+          name: nucleus
+          subPath: resolver-cache
+        - mountPath: /omni/log
+          name: nucleus
+          subPath: log/resolver-cache
+        - mountPath: /omni/omnicache_server/config/settings.yaml
+          name: configs
+          subPath: cache-settings.yaml
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+      - name: configs
+        configMap:
+          name: nucleus-configs
+          items:
+            - key: cache-settings.yaml
+              path: cache-settings.yaml

@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: "112"
+description: The Nucleus Core Helm chart for Kubernetes
+name: nucleus-core
+type: application
+version: 112.0.0-mr2038.gitlab.3043636.0b718dd8

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nucleus-tagging-configs
+  namespace: {{ .Release.Namespace }}
+data:
+  service_deployments: |
+    reg:
+      - name: external
+        transport:
+          type: sows
+          params:
+            host: {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+            port: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}443{{ else }}80{{ end }}
+            path: /omni/tagging
+          meta:
+            {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}
+            ssl: "true"
+            {{ end }}
+            supports_path: "true"

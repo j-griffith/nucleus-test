@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-lft
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-lft
+spec:
+  replicas: {{ .Values.lft.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-lft
+  template:
+    metadata:
+      labels:
+        app: nucleus-lft
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      initContainers:
+      - name: wait-nucleus-api
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-api 3009; do echo "Waiting for nucleus-api service"; sleep 2; done;']
+      containers:
+      - name: nucleus-lft
+          {{ $registry := .Values.images.registry }}
+          {{ $tag := .Values.images.tag }}
+          {{ with .Values.lft.image }}
+        image: "{{ if .registry }}{{ .registry }}{{ else }}{{ $registry }}{{ end }}/{{ .name }}:{{ if .tag }}{{ .tag }}{{ else }}{{ $tag }}{{ end }}{{ if .digest }}@{{ .digest }} {{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_LFT_AUTH_PUBLIC_KEY
+            value: /omni/secrets/jwt_pubkey.pub
+          {{- if .Values.lft.extra_env_vars }}
+          {{- range .Values.lft.extra_env_vars }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          {{ end }}
+        volumeMounts:
+        - mountPath: /omni/data
+          name: nucleus
+          subPath: data
+        - mountPath: /omni/log
+          name: nucleus
+          subPath: log/lft
+        - mountPath: /omni/secrets/jwt_pubkey.pub
+          name: secrets
+          subPath: jwt_pubkey.pub
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+      - name: secrets
+        secret:
+          secretName: nucleus-secrets
+          items:
+            - key: JWT_PUB_KEY
+              path: jwt_pubkey.pub

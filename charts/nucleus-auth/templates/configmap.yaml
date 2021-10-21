@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nucleus-auth-configs
+  namespace: {{ .Release.Namespace }}
+data:
+  service_deployments: |
+    reg:
+      - name: external
+        transport:
+          type: sows
+          params:
+            host: {{ include "local_or_global" (list "ingress.hostname" .) | trim }}
+            port: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}443{{ else }}80{{ end }}
+            path: /omni/auth
+          meta:
+            {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}
+            ssl: "true"
+            {{ end }}
+            supports_path: "true"
+        meta:
+          login_url: {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}https{{ else }}http{{ end }}://{{ include "local_or_global" (list "ingress.hostname" .) | trim }}/omni/auth/login/
+      - name: internal
+        transport:
+          type: sows
+          params:
+            host: nucleus-auth
+            port: 3100
+        meta:
+          login_url: http://nucleus-auth:3180/

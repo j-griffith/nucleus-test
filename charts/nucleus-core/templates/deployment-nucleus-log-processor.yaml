@@ -1,0 +1,63 @@
+{{ if .Values.log_processor.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-log-processor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-log-processor
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-log-processor
+  template:
+    metadata:
+      labels:
+        app: nucleus-log-processor
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      initContainers:
+      - name: wait-nucleus-api
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-api 3009; do echo "Waiting for nucleus-api service"; sleep 2; done;']
+      - name: wait-nucleus-lft
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-lft 3030; do echo "Waiting for nucleus-lft service"; sleep 2; done;']
+      containers:
+      - name: nucleus-log-processor
+          {{ $registry := .Values.images.registry }}
+          {{ $tag := .Values.images.tag }}
+          {{ with .Values.log_processor.image }}
+        image: "{{ if .registry }}{{ .registry }}{{ else }}{{ $registry }}{{ end }}/{{ .name }}:{{ if .tag }}{{ .tag }}{{ else }}{{ $tag }}{{ end }}{{ if .digest }}@{{ .digest }} {{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_INSTANCE
+            value: {{ .Release.Name }}
+          - name: OMNI_PROCESS_LFT_LOGS
+            value: "1"
+        volumeMounts:
+        - mountPath: /omni/log
+          name: nucleus
+          subPath: log
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+{{ end }}

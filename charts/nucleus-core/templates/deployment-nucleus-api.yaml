@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-api
+  template:
+    metadata:
+      labels:
+        app: nucleus-api
+    spec:
+      {{ if eq .Values.storage.access_mode "ReadWriteOnce" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.storage.affinity.node -}}
+      {{ end }}
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      initContainers:
+      - name: wait-redis-messagebus
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz redis-messagebus 6379; do echo "Waiting for redis service"; sleep 2; done;']
+      - name: wait-resolver-cache
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -vz nucleus-resolver-cache 8891; do echo "Waiting for resolver-cache service"; sleep 2; done;']
+      containers:
+      - name: nucleus-api
+          {{ $registry := .Values.images.registry }}
+          {{ $tag := .Values.images.tag }}
+          {{ with .Values.api.image }}
+        image: "{{ if .registry }}{{ .registry }}{{ else }}{{ $registry }}{{ end }}/{{ .name }}:{{ if .tag }}{{ .tag }}{{ else }}{{ $tag }}{{ end }}{{ if .digest }}@{{ .digest }}{{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: OMNI_INSTANCE
+            value: {{ .Release.Name }}
+          - name: OMNI_MASTER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: master_password
+                name: nucleus-master-password
+          - name: OMNI_MESSAGEBUS_REDIS_HOST
+            value: redis-messagebus
+          - name: OMNI_S3_RESOLVER_CACHE
+            value: http://nucleus-resolver-cache:8891
+          - name: OMNI_AUTH_JWT_PUBKEY
+            value: /omni/secrets/jwt_pubkey.pub
+          - name: OMNI_CRASHREPORTERENABLED
+            value: "0"
+          - name: OMNI_ENABLE_MESSAGEBUS
+            value: "1"
+          - name: OMNI_LFT_ADDRESS
+            value: http://*:80/omni/lft
+          {{ if eq (include "local_or_global" (list "ingress.tls" .) | trim) "true" }}
+          - name: OMNI_LFT_SSL_ADDRESS
+            value: https://*:443/omni/lft
+          {{ end }}
+          - name: OMNI_NUCLEUS_DISCOVERY_HOST
+            value: "nucleus-discovery"
+          - name: OMNI_NUCLEUS_DISCOVERY_SERVICE_DEPLOYMENTS
+            valueFrom:
+              configMapKeyRef:
+                name: nucleus-configs
+                key: service_deployments
+          - name: OMNI_NUCLEUS_DISCOVERY_TOKEN_FILE
+            value: /omni/secrets/discovery_token
+          {{- if .Values.api.extra_env_vars }}
+          {{- range .Values.api.extra_env_vars }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          {{ end }}
+        volumeMounts:
+        - mountPath: /omni/data
+          name: nucleus
+          subPath: data
+        - mountPath: /omni/log
+          name: nucleus
+          subPath: log/api
+        - mountPath: /omni/mnt
+          name: nucleus
+          subPath: mnt
+        - mountPath: /omni/scratch-meta-dump
+          name: nucleus
+          subPath: scratch-meta-dump
+        - mountPath: /omni/secrets/jwt_pubkey.pub
+          name: secrets
+          subPath: jwt_pubkey.pub
+        - mountPath: /omni/secrets/discovery_token
+          name: secrets
+          subPath: discovery_token
+      volumes:
+      - name: nucleus
+        persistentVolumeClaim:
+          claimName: nucleus
+      - name: secrets
+        secret:
+          secretName: nucleus-secrets
+          items:
+            - key: JWT_PUB_KEY
+              path: jwt_pubkey.pub
+            - key: DISCOVERY_TOKEN
+              path: discovery_token

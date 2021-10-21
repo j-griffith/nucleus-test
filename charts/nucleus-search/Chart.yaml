@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 2.2.0
+description: The Nucleus Search Helm chart for Kubernetes
+name: nucleus-search
+type: application
+version: 2.2.0-mr59.gitlab.3049479.1dcdf6c4

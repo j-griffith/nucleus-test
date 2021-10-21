@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nucleus-discovery
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nucleus-discovery
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nucleus-discovery
+  template:
+    metadata:
+      labels:
+        app: nucleus-discovery
+    spec:
+      imagePullSecrets:
+      - name: {{ include "local_or_global" (list "secrets.pull_secret" .) | trim }}
+      containers:
+      - name: nucleus-discovery
+          {{ with .Values.image }}
+        image: "{{ .registry }}/{{ .name }}:{{ .tag }}{{ if .digest }}@{{ .digest }}{{ end }}"
+          {{ end }}
+        env:
+          - name: ACCEPT_EULA
+            value: {{ include "local_or_global" (list "accept_eula" .) | trim | quote }}
+          - name: SERVICE_TOKEN
+            value: /omni/secrets/DISCOVERY_TOKEN
+          {{- if .Values.extra_env_vars }}
+          {{- range .Values.extra_env_vars }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          {{ end }}
+        volumeMounts:
+        - mountPath: /omni/secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: nucleus-secrets
+          defaultMode: 0400

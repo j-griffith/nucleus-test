@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nucleus-thumbnails
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: metrics
+  selector:
+    app: nucleus-thumbnails

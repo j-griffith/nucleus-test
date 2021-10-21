@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 2.3.1
+description: The Nucleus Web UI Helm chart for Kubernetes
+name: nucleus-web-ui
+type: application
+version: 2.3.1-mr97.gitlab.3043224.e18b3c31

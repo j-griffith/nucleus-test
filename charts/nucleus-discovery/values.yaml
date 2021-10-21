@@ -1,0 +1,19 @@
+accept_eula: no
+
+ingress:
+  hostname: "<hostname>"
+  tls: false
+
+secrets:
+  pull_secret: ""  # name of secret for pulling docker nucleus images. Should be created before deploying helm chart
+  tls_secret: "<tls_secret_name>"  # name of TLS secret
+  nucleus_secret: "nucleus-secrets"  # name of nucleus secret
+
+image:
+  name: "nucleus-discovery"
+  registry: "gitlab-master.nvidia.com:5005/omniverse/discovery-service"
+  tag: "1.4.0_mr71.gitlab.3043653.80026cad"
+
+#extra_env_vars:
+#  - name: ENV_VAR_NAME
+#    value: ENV_VAR_VALUE

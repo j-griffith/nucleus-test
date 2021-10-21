@@ -1,0 +1,15 @@
+{{ if .Values.log_processor.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: nucleus-log-processor
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: 9500
+      targetPort: 9500
+      protocol: TCP
+      name: metrics
+  selector:
+    app: nucleus-log-processor
+{{ end }}
